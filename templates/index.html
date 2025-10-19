@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDG 3 Health Tracker</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .card { 
+            background: #f9f9f9;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        /* Main heading style */
+        h1 { 
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        /* Style for form labels (e.g., "Age:", "Distance:") */
+        label { 
+            display: inline-block;
+            width: 200px;
+            margin: 8px 0;
+        }
+
+        /* Style for input fields and dropdowns */
+        input, select { 
+            padding: 6px;
+            width: 150px;
+        }
+
+        /* Primary action buttons (e.g., "Assess Pregnancy Risk") */
+        button { 
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Button appearance when user hovers over it */
+        button:hover { 
+            background: #2980b9;
+        }
+
+        /* Area where AI prediction results will appear */
+        #result { 
+            margin-top: 20px;
+            padding: 15px; 
+            background: #e8f4fc;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <h1>M & C HEALTH</h1>
+    <div class="card">
+        <h2>Pregnancy Risk Assessment</h2>
+        <label>Age:</label> 
+        <input type="number" id="age" value="30"><br>
+        <label>Number of Births:</label> 
+        <input type="number" id="parity" value="2"><br>
+        <label>Anemic?</label> 
+        <select id="anaemia">
+            <option>no</option>
+            <option selected>yes</option> <!-- Default selection -->
+        </select><br>
+        <label>Distance to Clinic (km):</label> 
+        <input type="number" id="distance_p" value="5" step="0.1"><br>
+        <label>ANC Visits:</label> 
+        <input type="number" id="anc_visits" value="3"><br>
+        <label>Rural?</label> 
+        <select id="rural_p">
+            <option>no</option>
+            <option selected>yes</option>
+        </select><br>
+        <button onclick="predictPregnancy()">Assess Pregnancy Risk</button>
+    </div>
+    <div class="card">
+        <h2>Vaccination Status Check</h2>
+        <label>Child Age (months):</label> 
+        <input type="number" id="age_months" value="12"><br>
+        <label>Low Birth Weight?</label> 
+        <select id="low_bw">
+            <option>no</option>
+            <option selected>yes</option>
+        </select><br>
+        <label>Mother's Education (years):</label> 
+        <input type="number" id="mother_edu" value="5"><br>
+        <label>Distance to Clinic (km):</label> 
+        <input type="number" id="distance_v" value="7" step="0.1"><br>
+        <label>Has Health Card?</label> 
+        <select id="has_card">
+            <option>no</option>
+            <option selected>yes</option>
+        </select><br>
+        <label>Rural?</label> 
+        <select id="rural_v">
+            <option>no</option>
+            <option selected>yes</option>
+        </select><br>
+        <button onclick="predictVaccination()">Check Vaccination Status</button>
+    </div>
+
+    <div id="result"></div>
+
+    <!-- JavaScript code to communicate with the Flask backend -->
+    <script>
+        // Function to send pregnancy data to the AI model
+        async function predictPregnancy() {
+            // Collect input values from the form
+            const data = {
+                task: 'pregnancy',                     // Tells backend which model to use
+                age: document.getElementById('age').value,
+                parity: document.getElementById('parity').value,
+                anemia: document.getElementById('anemia').value,
+                distance: document.getElementById('distance_p').value,
+                anc_visits: document.getElementById('anc_visits').value,
+                rural: document.getElementById('rural_p').value
+            };
+
+            // Send data to Flask backend at /predict endpoint
+            const res = await fetch('/predict', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            // Parse the AI's response
+            const result = await res.json();
+            
+            // Display the result in the #result div
+            document.getElementById('result').innerHTML = 
+                `<strong>Pregnancy Result:</strong> ${result.result} (Probability: ${result.probability})`;
+        }
+
+        // Function to send child vaccination data to the AI model
+        async function predictVaccination() {
+            const data = {
+                task: 'vaccination',                   // Use vaccination model
+                age_months: document.getElementById('age_months').value,
+                low_bw: document.getElementById('low_bw').value,
+                mother_edu: document.getElementById('mother_edu').value,
+                distance: document.getElementById('distance_v').value,
+                has_card: document.getElementById('has_card').value,
+                rural: document.getElementById('rural_v').value
+            };
+
+            const res = await fetch('/predict', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+            document.getElementById('result').innerHTML = 
+                `<strong>Vaccination Result:</strong> ${result.result} (Probability: ${result.probability})`;
+        }
+    </script>
+</body>
+</html>
